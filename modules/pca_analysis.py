@@ -7,6 +7,7 @@ import seaborn as sns
 
 def pca_analysis(X, n):
     return PCA(n_components=n,
+               whiten=True,
                svd_solver='randomized',
                random_state=1).fit_transform(X)
 

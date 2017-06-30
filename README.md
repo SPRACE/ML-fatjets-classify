@@ -1,7 +1,22 @@
 # Jet classification 
-Modules for the jet classification work.
+Modules for the jet classification work. 
 
-# Running examples
+## Instructions
+  * Create a virtual environment in the development machine *ml-dev.ncc.unesp.br*
+```shell
+conda create -p .env/mlwork -c intel python=3.6
+source activate .env/mlwork
+```
+  * Install requirements
+```shell
+conda install numpy scipy matplotlib seaborn pandas scikit-learn
+```
+  * Clone github repository
+```shell
+git clone https://github.com/jruizvar/jet-classify.git
+```
+
+## Running examples
 
   * Jet images and N-subjettiness plot
 ```shell
