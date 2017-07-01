@@ -2,7 +2,7 @@
 Modules for the jet classification work. 
 
 ## Instructions
-  * Create a virtual environment in the development machine *ml-dev.ncc.unesp.br*
+  * Create a virtual environment in the development machine **ml-dev.ncc.unesp.br**
 ```shell
 conda create -p .env/mlwork -c intel python=3.6
 source activate .env/mlwork
@@ -18,12 +18,17 @@ git clone https://github.com/jruizvar/jet-classify.git
 
 ## Running examples
 
-  * Jet images and N-subjettiness plot
+  * Plot average jet image for signal and background
 ```shell
-python modules/get_data.py data 250-300 
+python modules/plot_image.py data 250-300 
 ```
 ![](plots/signal_image.png)
 ![](plots/backgr_image.png)
+
+  * Plot n-subjettiness
+```shell
+python modules/plot_tau21.py data 250-300 
+```
 ![](plots/nsubjettiness.png)
 
   * Principal components analysis
