@@ -9,31 +9,36 @@ import seaborn as sns
 
 
 def evaluate_model(X, y, model):
-    sss = StratifiedShuffleSplit(n_splits=10, test_size=0.3, random_state=1)
+    sss = StratifiedShuffleSplit(n_splits=10, test_size=0.3, random_state=42)
     mean_tpr = np.zeros(100)
     mean_fpr = np.linspace(0, 1, 100)
+    scores = []
     for train_index, test_index in sss.split(X, y):
         X_train, X_test = X[train_index], X[test_index]
         y_train, y_test = y[train_index], y[test_index]
         probas_ = model.fit(X_train, y_train).predict_proba(X_test)
         # Compute ROC curve
         fpr, tpr, __ = roc_curve(y_test, probas_[:, 1])
+        scores += [auc(fpr, tpr)]
         mean_tpr += np.interp(mean_fpr, fpr, tpr)
 
     mean_tpr /= sss.get_n_splits(X, y)
-    mean_auc = auc(mean_fpr, mean_tpr)
-    return mean_tpr, mean_fpr, mean_auc
+    mean_auc = np.mean(scores)
+    erro_auc = np.std(scores)
+    return mean_tpr, mean_fpr, mean_auc, erro_auc
 
 
 def plot_roc_curve(X_img, y_img, X_tau, y_tau, ptbin):
     X_pca = pca_analysis(X_img, 60)
     names, models = model_definition()
     for name, model in zip(names, models):
-        tpr, fpr, roc_auc = evaluate_model(X_pca, y_img, model)
-        plt.plot(fpr, tpr, label=name + ' (area = %0.2f)' % roc_auc)
+        tpr, fpr, roc_auc, err = evaluate_model(X_pca, y_img, model)
+        plt.plot(fpr, tpr,
+                 label=name+' (auc = %0.2f +/- %.3f)' % (roc_auc, err))
 
-    tpr, fpr, roc_auc = evaluate_model(X_tau, y_tau, models[2])
-    plt.plot(fpr, tpr, label='n-subjettiness (area = %0.2f)' % roc_auc)
+    tpr, fpr, roc_auc, err = evaluate_model(X_tau, y_tau, models[2])
+    plt.plot(fpr, tpr,
+             label='n-subjettiness (auc = %0.2f +/- %.3f)' % (roc_auc, err))
     plt.plot([0, 1], [0, 1], color='black', lw=1, linestyle='--')
     plt.xlim([-0.05, 1.05])
     plt.ylim([-0.05, 1.05])

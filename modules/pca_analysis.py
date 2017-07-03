@@ -9,7 +9,7 @@ def pca_analysis(X, n):
     return PCA(n_components=n,
                whiten=True,
                svd_solver='randomized',
-               random_state=1).fit_transform(X)
+               random_state=42).fit_transform(X)
 
 
 def plot_components(X, y):

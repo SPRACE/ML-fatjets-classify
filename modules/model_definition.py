@@ -5,18 +5,18 @@ from sklearn.linear_model import LogisticRegression
 
 def model_definition():
     names = ['multilayer perceptron',
-             'random forest',
-             'logistic regression']
+             'logistic regression',
+             'random forest']
 
     classifiers = [
         MLPClassifier(solver='lbfgs',
                       hidden_layer_sizes=(5, ),
-                      random_state=1),
+                      random_state=42),
+
+        LogisticRegression(random_state=42),
 
         RandomForestClassifier(n_estimators=24,
                                max_depth=9,
-                               random_state=1),
-
-        LogisticRegression(random_state=1)]
+                               random_state=42)]
 
     return names, classifiers
