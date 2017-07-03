@@ -43,7 +43,7 @@ def reduce_dimensionality(X, n):
     pca = PCA(n_components=n,
               whiten=True,
               svd_solver='randomized',
-              random_state=1)
+              random_state=42)
     X_pca = pca.fit_transform(X)
     return X_pca
 
@@ -117,7 +117,7 @@ def custom_ax(ax, fpr, tpr, area, title):
 
 def plot_roc_curves(X, y):
     import matplotlib.pyplot as plt
-    fig, ax = plt.subplots(1, 3, sharey=True, figsize=(16, 5))
+    fig, ax = plt.subplots(1, 3, sharey=True, figsize=(16, 6))
     fig.suptitle("Model evaluation via stratified shuffle split")
     # Iterate over the splits
     for X_train, X_test, y_train, y_test in split_generator(X, y):
@@ -126,7 +126,8 @@ def plot_roc_curves(X, y):
         for title, result in results:
             i, fpr, tpr, area = result[0], result[1], result[2], result[3]
             custom_ax(ax[i], fpr, tpr, area, title)
-
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.85)
     return plt
 
 
