@@ -149,5 +149,5 @@ if __name__ == '__main__':
 
     # Evaluate classifiers
     print("\nEvaluating classifiers")
-    plot_roc_curves(X_pca, y).savefig('ml-vs-nsubjettiness.png')
-    print("\nResults: ml-vs-nsubjettiness.png\n")
+    plot_roc_curves(X_pca, y).savefig('model-evaluation.png')
+    print("\nResults: model-evaluation.png\n")
