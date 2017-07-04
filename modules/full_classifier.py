@@ -22,6 +22,9 @@ PTBIN = "250-300"
 SIG = os.path.join(DATADIR, "signal_PU0_13TeV_MJ-65-95_PTJ-" + PTBIN + ".txt")
 BKG = os.path.join(DATADIR, "backgr_PU0_13TeV_MJ-65-95_PTJ-" + PTBIN + ".txt")
 
+# Models names
+MODELS = ["Multilayer Perceptron", "Logistic Regression", "Random Forest"]
+
 
 def load_data():
     df_sig = read_csv(SIG, delim_whitespace=True)
@@ -67,14 +70,25 @@ def interpolate_rates(fpr, tpr):
     return mean_fpr, mean_tpr
 
 
+def training(clf, X_train, X_test, y_train, y_test):
+    # Import metrics
+    from sklearn.metrics import roc_curve, auc
+    # Fit model
+    clf.fit(X_train, y_train)
+    # Prepare result
+    score_train = clf.score(X_train, y_train)
+    score_test = clf.score(X_test, y_test)
+    y_prob = clf.predict_proba(X_test)
+    fpr, tpr, __ = roc_curve(y_test, y_prob[:, 1])
+    fpr, tpr = interpolate_rates(fpr, tpr)
+    return [fpr, tpr, auc(fpr, tpr), score_train, score_test]
+
+
 def classifiers(X_train, X_test, y_train, y_test):
     # Import some classifiers
     from sklearn.neural_network import MLPClassifier
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.linear_model import LogisticRegression
-
-    # Import ROC curve metric
-    from sklearn.metrics import roc_curve, auc
 
     # Dictionary to save the results
     results = {}
@@ -83,52 +97,69 @@ def classifiers(X_train, X_test, y_train, y_test):
     clf = MLPClassifier(solver='lbfgs',
                         hidden_layer_sizes=(5, ),
                         random_state=42)
-    y_prob = clf.fit(X_train, y_train).predict_proba(X_test)
-    fpr, tpr, __ = roc_curve(y_test, y_prob[:, 1])
-    fpr, tpr = interpolate_rates(fpr, tpr)
-    results["Multilayer Perceptron"] = [0, fpr, tpr, auc(fpr, tpr)]
+    result = training(clf, X_train, X_test, y_train, y_test)
+    results[MODELS[0]] = [0] + result
 
     # Logistic Regression
     clf = LogisticRegression(random_state=42)
-    y_prob = clf.fit(X_train, y_train).predict_proba(X_test)
-    fpr, tpr, __ = roc_curve(y_test, y_prob[:, 1])
-    fpr, tpr = interpolate_rates(fpr, tpr)
-    results["Logistic Regression"] = [1, fpr, tpr, auc(fpr, tpr)]
+    result = training(clf, X_train, X_test, y_train, y_test)
+    results[MODELS[1]] = [1] + result
 
     # Random Forest
     clf = RandomForestClassifier(n_estimators=24,
                                  max_depth=9,
                                  random_state=42)
-    y_prob = clf.fit(X_train, y_train).predict_proba(X_test)
-    fpr, tpr, __ = roc_curve(y_test, y_prob[:, 1])
-    fpr, tpr = interpolate_rates(fpr, tpr)
-    results["Random Forest"] = [2, fpr, tpr, auc(fpr, tpr)]
+    result = training(clf, X_train, X_test, y_train, y_test)
+    results[MODELS[2]] = [2] + result
 
     return results
 
 
-def custom_ax(ax, fpr, tpr, area, title):
-    ax.set_xlabel("False Positive Rate")
-    ax.set_ylabel("True Positive Rate")
-    ax.set_title(title)
-    ax.plot(fpr, tpr, label="auc = {:.2f}".format(area))
-    ax.legend(loc="lower right", title="area under curve (auc)")
-
-
-def plot_roc_curves(X, y):
+def plot_metrics(X, y):
     import matplotlib.pyplot as plt
     fig, ax = plt.subplots(1, 3, sharey=True, figsize=(16, 6))
     fig.suptitle("Model evaluation via stratified shuffle split")
+    # Dictionary to put the scores
+    score_train = {model: [] for model in MODELS}
+    score_test = {model: [] for model in MODELS}
     # Iterate over the splits
     for X_train, X_test, y_train, y_test in split_generator(X, y):
         # Iterate over the classifiers
         results = classifiers(X_train, X_test, y_train, y_test).items()
-        for title, result in results:
+        for model, result in results:
             i, fpr, tpr, area = result[0], result[1], result[2], result[3]
-            custom_ax(ax[i], fpr, tpr, area, title)
+            ax[i].plot(fpr, tpr, label="auc = {:.2f}".format(area))
+            ax[i].set_title(model)
+            score_train[model] += [result[4]]
+            score_test[model] += [result[5]]
+    # Adjust axis of roc curves
+    for axi in ax:
+        axi.set_xlabel("False Positive Rate")
+        axi.set_ylabel("True Positive Rate")
+        axi.legend(loc="lower right", title="area under curve (auc)")
     plt.tight_layout()
     plt.subplots_adjust(top=0.85)
-    return plt
+    plt.savefig('model-evaluation.png')
+    plt.close()
+    # Accuracy plot
+    __, ax = plt.subplots(1, 1, figsize=(12, 8))
+    score_train_mean = [np.mean(score_train[m]) for m in MODELS]
+    score_train_error = [np.std(score_train[m]) for m in MODELS]
+    score_test_mean = [np.mean(score_test[m]) for m in MODELS]
+    score_test_error = [np.std(score_test[m]) for m in MODELS]
+    ind = np.arange(2, -1, -1)  # [2, 1, 0]
+    width = 0.35
+    rects1 = ax.barh(ind, score_train_mean, width, xerr=score_train_error)
+    rects2 = ax.barh(ind+width, score_test_mean, width, xerr=score_test_error)
+    # Adjust axis
+    ax.set_title('Model evaluation')
+    ax.set_xlabel('Score')
+    ax.set_xlim([.60, .85])
+    ax.set_yticks(ind + 0.5*width)
+    ax.set_yticklabels(MODELS)
+    # Add legend
+    ax.legend((rects1[0], rects2[0]), ('Train', 'Test'))
+    plt.savefig('accuracies.png')
 
 
 if __name__ == '__main__':
@@ -149,5 +180,5 @@ if __name__ == '__main__':
 
     # Evaluate classifiers
     print("\nEvaluating classifiers")
-    plot_roc_curves(X_pca, y).savefig('model-evaluation.png')
-    print("\nResults: model-evaluation.png\n")
+    plot_metrics(X_pca, y)
+    print("\nResults:\nmodel-evaluation.png\naccuracies.png")
