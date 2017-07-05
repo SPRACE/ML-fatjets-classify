@@ -141,25 +141,29 @@ def plot_metrics(X, y):
     plt.subplots_adjust(top=0.85)
     plt.savefig('model-evaluation.png')
     plt.close()
+    # Mean score values and errors
+    score_train_mean, score_test_mean = [0, 0, 0], [0, 0, 0]
+    score_train_error, score_test_error = [0, 0, 0], [0, 0, 0]
+    for i, m in enumerate(MODELS):
+        score_train_mean[i] = np.mean(score_train[m])
+        score_train_error[i] = np.std(score_train[m])
+        score_test_mean[i] = np.mean(score_test[m])
+        score_test_error[i] = np.std(score_test[m])
     # Accuracy plot
     __, ax = plt.subplots(1, 1, figsize=(12, 8))
-    score_train_mean = [np.mean(score_train[m]) for m in MODELS]
-    score_train_error = [np.std(score_train[m]) for m in MODELS]
-    score_test_mean = [np.mean(score_test[m]) for m in MODELS]
-    score_test_error = [np.std(score_test[m]) for m in MODELS]
-    ind = np.arange(2, -1, -1)  # [2, 1, 0]
+    bars = np.array([2, 1, 0])
     width = 0.35
-    rects1 = ax.barh(ind, score_train_mean, width, xerr=score_train_error)
-    rects2 = ax.barh(ind+width, score_test_mean, width, xerr=score_test_error)
+    hist1 = ax.barh(bars, score_train_mean, width, xerr=score_train_error)
+    hist2 = ax.barh(bars+width, score_test_mean, width, xerr=score_test_error)
     # Adjust axis
     ax.set_title('Model evaluation')
     ax.set_xlabel('Score')
     ax.set_xlim([.60, .85])
-    ax.set_yticks(ind + 0.5*width)
+    ax.set_yticks(bars + 0.5*width)
     ax.set_yticklabels(MODELS)
     # Add legend
-    ax.legend((rects1[0], rects2[0]), ('Train', 'Test'))
-    plt.savefig('accuracies.png')
+    ax.legend((hist1[0], hist2[0]), ('Train', 'Test'))
+    plt.savefig('accuracy-score.png')
 
 
 if __name__ == '__main__':
@@ -181,4 +185,4 @@ if __name__ == '__main__':
     # Evaluate classifiers
     print("\nEvaluating classifiers")
     plot_metrics(X_pca, y)
-    print("\nResults:\nmodel-evaluation.png\naccuracies.png")
+    print("\nResults:\nmodel-evaluation.png\naccuracy-score.png\n")
