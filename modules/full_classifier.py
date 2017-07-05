@@ -9,6 +9,7 @@ matplotlib.use('Agg')
 try:
     # OPTIONAL
     import seaborn
+    seaborn.set_context('talk')
 except ImportError:
     pass
 
@@ -162,7 +163,8 @@ def plot_metrics(X, y):
     ax.set_yticks(bars + 0.5*width)
     ax.set_yticklabels(MODELS)
     # Add legend
-    ax.legend((hist1[0], hist2[0]), ('Train', 'Test'))
+    ax.legend((hist2, hist1), ('Test', 'Train'))
+    plt.tight_layout()
     plt.savefig('accuracy-score.png')
 
 
