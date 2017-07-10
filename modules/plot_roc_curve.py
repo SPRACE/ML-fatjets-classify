@@ -64,7 +64,7 @@ def plot_roc_curve(X_img, y_img, X_tau, y_tau, ptbin):
                  label=name+' (auc = %0.2f +/- %.3f)' % (roc_auc, err))
     # Plot n-subjettiness
     tpr, roc_auc, err = evaluate_model(X_tau, y_tau, models[2])
-    plt.plot([0.252], [0.748], '*', color='black', markersize=20, 
+    plt.plot([0.272], [0.748], '*', color='black', markersize=20, 
              label='n-subjettiness ($\\tau_{21}<0.37$)')
     plt.plot([0, 1], [0, 1], color='black', lw=1, linestyle='--')
     plt.xlim([-0.05, 1.05])
