@@ -116,6 +116,19 @@ def classifiers(X_train, X_test, y_train, y_test):
     return results
 
 
+def load_cnn_scores():
+    data = os.path.join("bin", "ScoreTrain_" + PTBIN + ".npy")
+    score_train = np.load(data)
+    data = os.path.join("bin", "ScoreTest_" + PTBIN + ".npy")
+    score_test = np.load(data)
+    score_train_mean = np.mean(score_train)
+    score_train_error = np.std(score_train)
+    score_test_mean = np.mean(score_test)
+    score_test_error = np.std(score_test)
+    return [score_train_mean, score_train_error,
+            score_test_mean, score_test_error]
+
+
 def plot_metrics(X, y):
     import matplotlib.pyplot as plt
     fig, ax = plt.subplots(1, 3, sharey=True, figsize=(16, 6))
@@ -150,18 +163,24 @@ def plot_metrics(X, y):
         score_train_error[i] = np.std(score_train[m])
         score_test_mean[i] = np.mean(score_test[m])
         score_test_error[i] = np.std(score_test[m])
+    # Append CNN scores
+    cnn_scores = load_cnn_scores()
+    score_train_mean = [cnn_scores[0]] + score_train_mean
+    score_train_error = [cnn_scores[1]] + score_train_error
+    score_test_mean = [cnn_scores[2]] + score_test_mean
+    score_test_error = [cnn_scores[3]] + score_test_error
     # Accuracy plot
     __, ax = plt.subplots(1, 1, figsize=(12, 8))
-    bars = np.array([2, 1, 0])
+    bars = np.array([3, 2, 1, 0])
     width = 0.35
     hist1 = ax.barh(bars, score_train_mean, width, xerr=score_train_error)
     hist2 = ax.barh(bars+width, score_test_mean, width, xerr=score_test_error)
     # Adjust axis
-    ax.set_title('Model evaluation')
+    ax.set_title('Model Evaluation')
     ax.set_xlabel('Score')
     ax.set_xlim([.60, .85])
     ax.set_yticks(bars + 0.5*width)
-    ax.set_yticklabels(MODELS)
+    ax.set_yticklabels(["Convolutional Neural Net"] + MODELS)
     # Add legend
     ax.legend((hist2, hist1), ('Test', 'Train'))
     plt.tight_layout()
