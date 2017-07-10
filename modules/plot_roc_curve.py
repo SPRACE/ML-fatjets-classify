@@ -6,39 +6,66 @@ from get_data import get_image, get_tau21, tidy_data
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import os
+
+# PT of the data sample
+PTBIN = "250-300"
+
+# ROC Curve x-axis
+MEAN_FPR = np.linspace(0, 1, 100)
 
 
 def evaluate_model(X, y, model):
-    sss = StratifiedShuffleSplit(n_splits=10, test_size=0.3, random_state=42)
+    split = StratifiedShuffleSplit(n_splits=10, test_size=0.3, random_state=42)
     mean_tpr = np.zeros(100)
-    mean_fpr = np.linspace(0, 1, 100)
-    scores = []
-    for train_index, test_index in sss.split(X, y):
+    area = []
+    for train_index, test_index in split.split(X, y):
         X_train, X_test = X[train_index], X[test_index]
         y_train, y_test = y[train_index], y[test_index]
         probas_ = model.fit(X_train, y_train).predict_proba(X_test)
         # Compute ROC curve
         fpr, tpr, __ = roc_curve(y_test, probas_[:, 1])
-        scores += [auc(fpr, tpr)]
-        mean_tpr += np.interp(mean_fpr, fpr, tpr)
+        tpr = np.interp(MEAN_FPR, fpr, tpr)
+        mean_tpr += tpr
+        area += [auc(MEAN_FPR, tpr)]
 
-    mean_tpr /= sss.get_n_splits(X, y)
-    mean_auc = np.mean(scores)
-    erro_auc = np.std(scores)
-    return mean_tpr, mean_fpr, mean_auc, erro_auc
+    mean_tpr /= split.get_n_splits(X, y)
+    mean_auc = np.mean(area)
+    error_auc = np.std(area)
+    return mean_tpr, mean_auc, error_auc
+
+
+def load_cnn():
+    mean_tpr = np.zeros(100)
+    data = os.path.join("bin", "TruePositiveRates_" + PTBIN + ".npy")
+    tprs = np.load(data)
+    area = []
+    for tpr in tprs:
+        mean_tpr += tpr
+        area += [auc(MEAN_FPR, tpr)]
+
+    mean_tpr /= 10  # 10 splits
+    mean_auc = np.mean(area)
+    error_auc = np.std(area)
+    return mean_tpr, mean_auc, error_auc
 
 
 def plot_roc_curve(X_img, y_img, X_tau, y_tau, ptbin):
+    # Plot Convolutional NN first
+    tpr, roc_auc, err = load_cnn()
+    plt.plot(MEAN_FPR, tpr,
+             label='convolutional neural net (auc = %0.2f +/- %.3f)' % (roc_auc, err))
+    # Plot other models
     X_pca = pca_analysis(X_img, 60)
     names, models = model_definition()
     for name, model in zip(names, models):
-        tpr, fpr, roc_auc, err = evaluate_model(X_pca, y_img, model)
-        plt.plot(fpr, tpr,
+        tpr, roc_auc, err = evaluate_model(X_pca, y_img, model)
+        plt.plot(MEAN_FPR, tpr,
                  label=name+' (auc = %0.2f +/- %.3f)' % (roc_auc, err))
-
-    tpr, fpr, roc_auc, err = evaluate_model(X_tau, y_tau, models[2])
-    plt.plot(fpr, tpr,
-             label='n-subjettiness (auc = %0.2f +/- %.3f)' % (roc_auc, err))
+    # Plot n-subjettiness
+    tpr, roc_auc, err = evaluate_model(X_tau, y_tau, models[2])
+    plt.plot([0.252], [0.748], '*', color='black', markersize=20, 
+             label='n-subjettiness ($\\tau_{21}<0.37$)')
     plt.plot([0, 1], [0, 1], color='black', lw=1, linestyle='--')
     plt.xlim([-0.05, 1.05])
     plt.ylim([-0.05, 1.05])
