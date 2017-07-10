@@ -27,8 +27,13 @@ IMAGESIZE = (25, 25, 1)
 SIG = os.path.join(DATADIR, "signal_PU0_13TeV_MJ-65-95_PTJ-" + PTBIN + ".txt")
 BKG = os.path.join(DATADIR, "backgr_PU0_13TeV_MJ-65-95_PTJ-" + PTBIN + ".txt")
 
-# Output file
-OUTFILE = "TruePositiveRates-" + PTBIN + ".npy"
+# Output files
+TPR_OUTFILE = "TruePositiveRates_" + PTBIN + ".npy"
+SCORE_TRAIN = "ScoreTrain_" + PTBIN + ".npy"
+SCORE_TEST = "ScoreTest_" + PTBIN + ".npy"
+
+# Random seed
+np.random.seed(42)
 
 
 def load_data():
@@ -122,6 +127,9 @@ def run_model(X, y):
     model.compile(loss='binary_crossentropy',
                   optimizer='Adam')
 
+    # Origin weights
+    model.save_weights('model.h5')
+
     # Lists to put the results
     tpr = []
     score_train = []
@@ -139,6 +147,8 @@ def run_model(X, y):
         tpr += [results[0]]
         score_train += [results[1]]
         score_test += [results[2]]
+        # Reset weights
+        model.load_weights('model.h5')
     return tpr, score_train, score_test
 
 
@@ -166,7 +176,9 @@ if __name__ == '__main__':
                                                         score_train_error))
     print("\nTesting score = {:.4f} +/- {:.4f}".format(score_test_mean,
                                                        score_test_error))
-    print("\nWriting results to file {}".format(OUTFILE))
-    # True positive rates for all splits
+    print("\nWriting results to file {}".format(TPR_OUTFILE))
+    # Save the true positive rates for all splits
     # The false positive rates are always np.linspace(0, 1, 100)
-    np.save(OUTFILE, tpr)
+    np.save(TPR_OUTFILE, tpr)
+    np.save(SCORE_TRAIN, score_train)
+    np.save(SCORE_TEST, score_test)
