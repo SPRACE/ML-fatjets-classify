@@ -85,7 +85,7 @@ def evaluate_model(model, X_train, X_test, y_train, y_test):
 def simple_model():
     model = Sequential()
     model.add(Dense(units=256, kernel_initializer='uniform',
-              activation='relu', input_dim=NCOMPONENTS))
+              activation='relu', input_dim=625))
     model.add(Dropout(0.2))
     model.add(Dense(units=256, kernel_initializer='uniform',
               activation='relu'))
@@ -127,7 +127,7 @@ def run_model(X, y):
     model.compile(loss='binary_crossentropy',
                   optimizer='Adam')
 
-    # Origin weights
+    # Original weights
     model.save_weights('model.h5')
 
     # Lists to put the results

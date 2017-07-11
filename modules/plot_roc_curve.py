@@ -53,18 +53,19 @@ def load_cnn():
 def plot_roc_curve(X_img, y_img, X_tau, y_tau, ptbin):
     # Plot Convolutional NN first
     tpr, roc_auc, err = load_cnn()
+    name = "convolutional neural net "
     plt.plot(MEAN_FPR, tpr,
-             label='convolutional neural net (auc = %0.2f +/- %.3f)' % (roc_auc, err))
+             label=name + "(auc = {:.2f} +/- {:.3f})".format(roc_auc, err))
     # Plot other models
     X_pca = pca_analysis(X_img, 60)
     names, models = model_definition()
     for name, model in zip(names, models):
         tpr, roc_auc, err = evaluate_model(X_pca, y_img, model)
         plt.plot(MEAN_FPR, tpr,
-                 label=name+' (auc = %0.2f +/- %.3f)' % (roc_auc, err))
+                 label=name +
+                 " (auc = {:.2f} +/- {:.3f})".format(roc_auc, err))
     # Plot n-subjettiness
-    tpr, roc_auc, err = evaluate_model(X_tau, y_tau, models[2])
-    plt.plot([0.272], [0.748], '*', color='black', markersize=20, 
+    plt.plot([0.272], [0.710], '*', color='black', markersize=20,
              label='n-subjettiness ($\\tau_{21}<0.37$)')
     plt.plot([0, 1], [0, 1], color='black', lw=1, linestyle='--')
     plt.xlim([-0.05, 1.05])
