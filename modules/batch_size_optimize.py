@@ -1,5 +1,5 @@
 """
-    Batch size optimization.
+    Batch size optimization
     Analyses the training time and model accuracy for different batch sizes
 """
 
@@ -41,8 +41,9 @@ def shuffle_split(x_data, y_data):
 
 
 def grid_search():
-    param_grid = {'batch_size': [5, 50, 500, 5000],
-                  'hidden_units': [[5], [10], [5, 10], [10, 10]]}
+    batch_size = [1, 2, 5, 10, 50, 100, 1000]
+    hidden_units = [[1], [2], [5], [10], [5, 5], [10, 5], [5, 10], [10, 10]]
+    param_grid = {'batch_size': batch_size, 'hidden_units': hidden_units}
     return list(ParameterGrid(param_grid))
 
 
@@ -51,6 +52,9 @@ def main(x_data, y_data):
     """
         Iterate over parameters grid
     """
+    train_accuracy_results = []
+    test_accuracy_results = []
+    time_results = []
     for grid in grid_search():
         """
             Define input functions
@@ -73,18 +77,32 @@ def main(x_data, y_data):
         """
         t = datetime.datetime.now()
         model.train(input_fn=train_input_fn)
-        print("\nTraining time = {}\n".format(datetime.datetime.now() - t))
+        train_time = (datetime.datetime.now() - t).total_seconds()
+        time_results += [train_time]
         """
             Evaluate accuracy
         """
+        train_accuracy = model.evaluate(input_fn=train_input_fn)["accuracy"]
+        train_accuracy_results += [train_accuracy]
+
         test_input_fn = tf.estimator.inputs.numpy_input_fn(
                 x={"x": x_test},
                 y=y_test,
                 batch_size=grid['batch_size'],
                 num_epochs=1,
                 shuffle=False)
-        accuracy = model.evaluate(input_fn=test_input_fn)["accuracy"]
-        print("\nTest Accuracy: {0:f}\n".format(accuracy))
+
+        test_accuracy = model.evaluate(input_fn=test_input_fn)["accuracy"]
+        test_accuracy_results += [test_accuracy]
+
+    print("\nTime results\n")
+    print(time_results)
+
+    print("\nTrain accuracy results\n")
+    print(train_accuracy_results)
+
+    print("\nTest accuracy results\n")
+    print(test_accuracy_results)
 
 
 if __name__ == "__main__":
