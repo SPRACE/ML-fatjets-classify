@@ -71,7 +71,8 @@ def main(x_data, y_data):
         feature_columns = [tf.feature_column.numeric_column("x", shape=[625])]
         model = tf.estimator.DNNClassifier(feature_columns=feature_columns,
                                            hidden_units=grid['hidden_units'],
-                                           n_classes=2)
+                                           n_classes=2,
+                                           optimizer='Adam')
         """
             Train model
         """
