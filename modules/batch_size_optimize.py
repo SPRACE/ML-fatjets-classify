@@ -41,10 +41,10 @@ def shuffle_split(x_data, y_data):
 
 
 def grid_search():
-    batch_size = [1, 2, 5, 10, 50, 100, 1000]
-    hidden_units = [[1], [2], [5], [10], [5, 5], [10, 5], [5, 10], [10, 10]]
+    batch_size = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
+    hidden_units = [[1], [2], [5], [5, 5], [20, 20], [50, 50]]
     param_grid = {'batch_size': batch_size, 'hidden_units': hidden_units}
-    return list(ParameterGrid(param_grid))
+    return ParameterGrid(param_grid)
 
 
 def main(x_data, y_data):
